@@ -6,9 +6,10 @@ import javax.imageio.plugins.jpeg.JPEGImageWriteParam;
 import javax.imageio.stream.FileImageOutputStream;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.util.stream.Stream;
 
 public class PNG2JPG {
-    protected boolean status;
+     boolean status;
 
      PNG2JPG(String path,float quality){
         File file = new File(path);
@@ -27,6 +28,7 @@ public class PNG2JPG {
             writer.setOutput(new FileImageOutputStream(
                     new File(path + "/" + fileName + ".jpg")));
             writer.write(null, new IIOImage(image, null, null), jpegParams);
+
             status = true;
         }
 
