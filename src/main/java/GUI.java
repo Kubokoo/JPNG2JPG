@@ -55,10 +55,17 @@ public class GUI {
 
     private void fileFilter (){
         if (!pathsCollection.isEmpty()){
-            for (int i = 0; i<pathsCollection.size(); i++){
+            int sizeOfPathsCollection = pathsCollection.size();
+            int stepSize = sizeOfPathsCollection/99;
+            
+            for (int i = 0; i < sizeOfPathsCollection; i++){
+                if(i%stepSize==0) {
+                    progressBar1.setValue(progressBar1.getValue()+1); //TODO check if multithreading solves this.
+                }
+
                 String extension = FilenameUtils.getExtension(pathsCollection.get(i).toString().toLowerCase());
                 if(extension.equals("png")){
-                    new PNG2JPG(pathsCollection.get(i).toString(),1);
+                    new PNG2JPG(pathsCollection.get(i).toString(),1); //TODO Add changing of quality in GUI
                 }
                 //TODO Add some form of later removal of non PNG files
             }

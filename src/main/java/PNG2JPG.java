@@ -4,9 +4,9 @@ import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.plugins.jpeg.JPEGImageWriteParam;
 import javax.imageio.stream.FileImageOutputStream;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.util.stream.Stream;
 
 public class PNG2JPG {
      boolean status;
@@ -24,10 +24,16 @@ public class PNG2JPG {
             jpegParams.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
             jpegParams.setCompressionQuality(quality); //Quality from 0 to 1
 
+            BufferedImage result = new BufferedImage(
+                    image.getWidth(),
+                    image.getHeight(),
+                    BufferedImage.TYPE_INT_RGB);
+
+            result.createGraphics().drawImage(image, 0, 0, Color.WHITE, null);
             final ImageWriter writer = ImageIO.getImageWritersByFormatName("jpg").next();
             writer.setOutput(new FileImageOutputStream(
                     new File(path + "/" + fileName + ".jpg")));
-            writer.write(null, new IIOImage(image, null, null), jpegParams);
+            writer.write(null, new IIOImage(result, null, null), jpegParams);
 
             status = true;
         }
