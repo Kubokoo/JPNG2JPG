@@ -11,6 +11,13 @@ import java.io.*;
 public class PNG2JPG {
      boolean status;
 
+
+    /**
+     * Constructor, converts .png image to jpg
+     * Trows exception when no file was found
+     * @param path path to converted file
+     * @param quality quality of output file (form 0 to 1f)
+     */
      PNG2JPG(String path,float quality){
         File file = new File(path);
 
