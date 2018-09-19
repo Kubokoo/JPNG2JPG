@@ -3,28 +3,25 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GUI extends SwingWorker<Object , Object> {
+public class GUI{
     private JPanel MainGui;
     private JTextField userPath;
     private JButton button1;
     private JButton start;
     private JProgressBar progressBar1;
     private JFileChooser fileChooser;
-    private List<Path> pathsCollection = new ArrayList<>();
+    private List<String> pathsCollection = new ArrayList<>();
     private List<String> onlyPNGPathsCollection = new ArrayList<>();
 
     static private ResourceBundle mybundle;
@@ -50,6 +47,7 @@ public class GUI extends SwingWorker<Object , Object> {
         try {
             pathsCollection = Files.walk(Paths.get(userPath.getText()))
                     .filter(Files::isRegularFile)
+                    .map(p -> p.toString())
                     .collect(Collectors.toList());
         } catch (IOException ex){
             System.out.println(mybundle.getString("path_doesn't_exist")); //TODO create window for this
@@ -58,9 +56,7 @@ public class GUI extends SwingWorker<Object , Object> {
         }
 
         //TODO add Task to set progress bar
-        progressBar1.setStringPainted(true);
-        progressBar1.setValue(100);
-        System.out.println(progressBar1.getValue());
+        progressBar1.setValue(1);
         fileFilter();
     }
 
@@ -71,40 +67,43 @@ public class GUI extends SwingWorker<Object , Object> {
     private void fileFilter (){
         if (!pathsCollection.isEmpty()){
             int sizeOfPathsCollection = pathsCollection.size();
-            int stepSize = sizeOfPathsCollection/99;
-            
-            for (int i = 0; i < sizeOfPathsCollection; i++){
-                if(i%stepSize==0) {
-                    //progressBar1.setValue(progressBar1
-                    // .getValue()+1);
-                }
+            progressBar1.setMaximum(sizeOfPathsCollection+1);
 
+            for (int i = 0; i < sizeOfPathsCollection; i++){
                 String extension = FilenameUtils.getExtension(pathsCollection.get(i)
-                        .toString()
                         .toLowerCase());
                 if(extension.equals("png")){
-                    onlyPNGPathsCollection.add(pathsCollection.get(i).toString());
+                    onlyPNGPathsCollection.add(pathsCollection.get(i));
                 }
             }
+            progressBar1.setValue(progressBar1.getMaximum()/4); //TODO Add proper changing of progressBar value when file was converted
+            worker.execute();
+        }
+    }
+
+    /**
+     *
+     */
+    private SwingWorker<Void,Void> worker = new SwingWorker<Void, Void>() {
+        @Override
+        protected Void doInBackground () {
             System.out.println(Instant.now());
 
-            pathsCollection.clear();
+            //TODO create PNG2JPG class object and check it status to move progress bar
             onlyPNGPathsCollection
                     .parallelStream()
-                    .forEach(p -> new PNG2JPG(p,1)); //TODO Add changing of quality in GUI
+                    .forEach(p -> new PNG2JPG(p, 1)); //TODO Add changing of quality in GUI
 
             System.out.println(Instant.now());
             isCurrentlyRunning = false;
+            return null;
         }
-        //TODO create window for this
-    }
 
-    @Override
-    protected Object doInBackground(){
-
-        return null;
-    }
-
+        @Override
+        protected void done(){
+            progressBar1.setValue(progressBar1.getMaximum());
+        }
+    };
 
     /**
      * Creates window for user interface and gets language bundle for app.
