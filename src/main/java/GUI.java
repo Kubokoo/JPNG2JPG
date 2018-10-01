@@ -5,6 +5,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Locale;
@@ -20,6 +21,7 @@ public class GUI{
     private JButton button1;
     private JButton start;
     private JProgressBar progressBar1;
+    private JTextField oldFiles;
     private JFileChooser fileChooser;
     private List<String> pathsCollection = new ArrayList<>();
     private List<String> onlyPNGPathsCollection = new ArrayList<>();
@@ -40,7 +42,6 @@ public class GUI{
 
     /**
      * Gets path form user input and writes them to List pathCollection
-     *
      */
     private void fileGetter(){
         isCurrentlyRunning = true;
@@ -69,7 +70,7 @@ public class GUI{
             int sizeOfPathsCollection = pathsCollection.size();
             progressBar1.setMaximum(sizeOfPathsCollection+1);
 
-            for (int i = 0; i < sizeOfPathsCollection; i++){
+            for (int i = 0; i < sizeOfPathsCollection; i++){ //TODO If files have a alpha used in them give choice should they be converted
                 String extension = FilenameUtils.getExtension(pathsCollection.get(i)
                         .toLowerCase());
                 if(extension.equals("png")){
@@ -77,7 +78,27 @@ public class GUI{
                 }
             }
             progressBar1.setValue(progressBar1.getMaximum()/4); //TODO Add proper changing of progressBar value when file was converted
-            worker.execute();
+            worker.execute(); //TODO Lauch4j create exe from jar
+        }
+    }
+
+    /**
+     * Method for file moving, created only because .foreach can't handle try,catch
+     * Moves file to location specified in oldFiles textbox
+     * @param path Path to moved file
+     */
+
+    private void fileMoving (String path){
+        try {
+            String test = oldFiles.getText()
+                    + "\\"
+                    + FilenameUtils.getName(path);
+            Files.move(Paths.get(path),
+                    Paths.get(test)); //TODO Gives wrong path
+        }
+        catch (IOException ex){
+            ex.printStackTrace();
+            System.out.println(mybundle.getString("error_moving_file"));
         }
     }
 
@@ -94,14 +115,23 @@ public class GUI{
                     .parallelStream()
                     .forEach(p -> new PNG2JPG(p, 1)); //TODO Add changing of quality in GUI
 
+            onlyPNGPathsCollection
+                    .parallelStream() //TODO Test overhead/performance
+                    .forEach(p -> fileMoving(p));
+
+            progressBar1.setValue(progressBar1.getMaximum());
+
+            pathsCollection.clear();
+            onlyPNGPathsCollection.clear();
             System.out.println(Instant.now());
+
             isCurrentlyRunning = false;
+            System.gc(); //TODO Test does it have impact on performance
             return null;
         }
 
         @Override
         protected void done(){
-            progressBar1.setValue(progressBar1.getMaximum());
         }
     };
 
