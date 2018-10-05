@@ -42,9 +42,6 @@ public class PNG2JPG {
                     new File(path + "/" + fileName + ".jpg")));
             writer.write(null, new IIOImage(result, null, null), jpegParams);
 
-            image.flush(); //TODO Test does it have impact on performance
-            result.flush(); //TODO Test does it have impact on performance
-
             status = true;
         }
 

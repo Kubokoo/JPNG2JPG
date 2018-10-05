@@ -35,7 +35,7 @@ public class GUI{
             public void mouseReleased(MouseEvent e) {
                 super.mouseReleased(e);
                 if(!isCurrentlyRunning) fileGetter();
-                else System.out.println(mybundle.getString("app_running")); //TODO create window for this
+                else infoWindowCreator("app_running");
             }
         });
     }
@@ -44,21 +44,25 @@ public class GUI{
      * Gets path form user input and writes them to List pathCollection
      */
     private void fileGetter(){
-        isCurrentlyRunning = true;
-        try {
-            pathsCollection = Files.walk(Paths.get(userPath.getText()))
-                    .filter(Files::isRegularFile)
-                    .map(p -> p.toString())
-                    .collect(Collectors.toList());
-        } catch (IOException ex){
-            System.out.println(mybundle.getString("path_doesn't_exist")); //TODO create window for this
-            isCurrentlyRunning = false;
-            return;
-        }
+        if(!userPath.getText().isEmpty()){
+            isCurrentlyRunning = true;
+            try {
+                pathsCollection = Files.walk(Paths.get(userPath.getText()))
+                        .filter(Files::isRegularFile)
+                        .map(path -> path.toString())
+                        .collect(Collectors.toList());
+            } catch (IOException ex){
+                infoWindowCreator("path_doesn't_exist");
+                isCurrentlyRunning = false;
+                return;
+            }
 
-        //TODO add Task to set progress bar
-        progressBar1.setValue(1);
-        fileFilter();
+            //TODO add Task to set progress bar
+            progressBar1.setValue(1);
+            fileFilter();
+
+        }
+        else infoWindowCreator("no_path");
     }
 
     /**
@@ -70,11 +74,11 @@ public class GUI{
             int sizeOfPathsCollection = pathsCollection.size();
             progressBar1.setMaximum(sizeOfPathsCollection+1);
 
-            for (int i = 0; i < sizeOfPathsCollection; i++){ //TODO If files have a alpha used in them give choice should they be converted
-                String extension = FilenameUtils.getExtension(pathsCollection.get(i)
+            for (String aPathsCollection : pathsCollection) { //TODO If files have a alpha used in them give choice should they be converted
+                String extension = FilenameUtils.getExtension(aPathsCollection
                         .toLowerCase());
-                if(extension.equals("png")){
-                    onlyPNGPathsCollection.add(pathsCollection.get(i));
+                if (extension.equals("png")) {
+                    onlyPNGPathsCollection.add(aPathsCollection);
                 }
             }
             progressBar1.setValue(progressBar1.getMaximum()/4); //TODO Add proper changing of progressBar value when file was converted
@@ -89,21 +93,33 @@ public class GUI{
      */
 
     private void fileMoving (String path){
+        final String folderToMoveOldFiles =  oldFiles.getText();
+
+        try {
+            if(!Files.exists(Paths.get(folderToMoveOldFiles)))
+                Files.createDirectories(Paths.get(folderToMoveOldFiles));
+        } catch (IOException ex){
+            ex.printStackTrace();
+            infoWindowCreator("error_moving_file");
+            return;
+        }
+
         try {
             String test = oldFiles.getText()
                     + "\\"
                     + FilenameUtils.getName(path);
             Files.move(Paths.get(path),
                     Paths.get(test)); //TODO Gives wrong path
-        }
+        }   //TODO Think about moving files just after conversion (maybe creating separete thread for that and use status
         catch (IOException ex){
             ex.printStackTrace();
-            System.out.println(mybundle.getString("error_moving_file"));
+            infoWindowCreator("error_moving_file");
+            return;
         }
     }
 
     /**
-     *
+     * Converting and moving files without blocking gui thread
      */
     private SwingWorker<Void,Void> worker = new SwingWorker<Void, Void>() {
         @Override
@@ -158,5 +174,12 @@ public class GUI{
         Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
         frame.setLocation(dim.width/2-frame.getSize().width/2,
                 dim.height/2-frame.getSize().height/2);
+    }
+
+    private void infoWindowCreator(String text){
+        InfoWindow window = new InfoWindow(mybundle.getString(text));
+        window.pack();
+        window.setLocationRelativeTo(null);
+        window.setVisible(true);
     }
 }
